@@ -1,23 +1,46 @@
-import React, { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { register } from '../api/requests'
+import { useState } from "react";
+import { login, register } from "../api/requests";
+import { Link, useNavigate } from "react-router-dom";
+const Registration = () => {
+  const [fullName, setFullName] = useState("");
+  const [user, setUser] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate()
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    try {
+      const data = await register(fullName, user, password);
+      await login(user,password)
+      navigate('/')
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
-export default function Registration() {
-  let name = useRef()
-  let user= useRef() 
-  let password = useRef()
-  const [error,setError] = useState('')
   return (
     <div className="wrapper center">
-      <form>
-        <input type="text" placeholder='Name Surname' ref={name} />
-        <input type="text" placeholder="user" ref={user}/>
-        <input type="password" placeholder="password" ref={password} />
-        <p>{error}</p>
-        <div className="gverdit">
-        <button onClick={(e)=>{e.preventDefault();console.log(register({name:name.current.value, user: user.current.value, password: password.current.value, refreshToken: Math.random()})); e.preventDefault()}}>Register</button> <Link to='/login'>Login</Link>
-        </div>
+      <form onSubmit={handleSubmit} style={{ maxWidth: "280px", margin: "0 auto" }}>
+        <h2>Register</h2>
+        {error && <p style={{ color: "red" }}>{error}</p>}
+        <label htmlFor="fullName">Full Name:</label>
+        <input type="text" id="fullName" name="fullName" value={fullName} onChange={(event) => setFullName(event.target.value)} required />
+        <label htmlFor="user">Username:</label>
+        <input type="text" id="user" name="user" value={user} onChange={(event) => setUser(event.target.value)} required />
+        <label htmlFor="password">Password:</label>
+        <input type="password" id="password" name="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+        <label htmlFor="confirmPassword">Confirm Password:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required />
+        <button type="submit">Submit</button>
+        <Link to="/login">Login</Link>
       </form>
     </div>
-  )
-}
+  );
+};
+
+export default Registration;

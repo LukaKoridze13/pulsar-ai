@@ -1,50 +1,115 @@
-import http from "http";
-import { Server } from "socket.io";
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import http from "http";
+import { Server } from "socket.io";
+
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: "*" });
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
+// Array to store registered users
+const users = [];
+
+// Socket.io
 let onlineUsers = 0;
-let users = [];
 
 io.on("connection", (socket) => {
+  console.log("User connected");
   onlineUsers++;
-  io.emit("users-online", onlineUsers);
+  io.emit("online", onlineUsers);
+
+  socket.on("register", (data) => {
+    console.log("User registered:", data);
+    users.push(data);
+    io.emit("new-user", data);
+  });
+
   socket.on("disconnect", () => {
+    console.log("User disconnected");
     onlineUsers--;
+    io.emit("online", onlineUsers);
   });
 });
 
-app.get("/users-online", (req, res) => {
-  res.send(onlineUsers.toString());
+// Express routes
+app.get("/online-users", (req, res) => {
+  res.json({ onlineUsers });
 });
+
+app.get("/registered-users", (req, res) => {
+  res.json(users);
+});
+
 app.get("/users", (req, res) => {
-  res.send(onlineUsers.toString());
+  res.json({ onlineUsers, users });
 });
+
+app.get("/users/:username", (req, res) => {
+  const { username } = req.params;
+  const user = users.find((u) => u.user === username);
+  if (user) {
+    res.json(user);
+  } else {
+    res.status(404).json({ message: "User not found" });
+  }
+});
+
 app.post("/register", (req, res) => {
-  let { name, user, password, refreshToken } = req.body;
-
-  if (!name || typeof name !== "string") {
-    return res.status(400).send("Invalid name");
+  const { fullName, user, password, refreshToken } = req.body;
+  console.log(req.body)
+  if (!fullName || !user || !password) {
+    return res.status(400).json({ message: "All fields are required" });
   }
 
-  if (!user || typeof user !== "string") {
-    return res.status(400).send("Invalid user");
+  const existingUser = users.find((u) => u.user === user);
+  if (existingUser) {
+    return res.status(409).json({ message: "Username already exists" });
   }
 
-  if (!password || typeof password !== "string" || password.length < 3) {
-    return res.status(400).send("Invalid password. Password must be at least 3 characters long.");
-  }
-  let userObj = { name, user, password, refreshToken };
-  users.push(user)
-  res.send("Success!");
+  const newUser = { fullName, user, password, refreshToken };
+  users.push(newUser);
+  io.emit("new-user", newUser);
+  res.status(201).json(newUser);
 });
 
-server.listen(3824, () => {
-  console.log("Socket.io server listening on port 3824");
+app.post("/login", (req, res) => {
+  const { user, password } = req.body;
+
+  const existingUser = users.find((u) => u.user === user && u.password === password);
+  if (!existingUser) {
+    return res.status(401).json({ message: "Invalid username or password" });
+  }
+
+  const newRefreshToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  existingUser.refreshToken = newRefreshToken;
+
+  res.status(200).json({ message: "Login successful", refreshToken: newRefreshToken });
+});
+
+app.post("/logout", (req, res) => {
+  const { refreshToken } = req.body;
+
+  const existingUser = users.find((u) => u.refreshToken === refreshToken);
+  if (!existingUser) {
+    return res.status(401).json({ message: "Invalid refresh token" });
+  }
+
+  existingUser.refreshToken = null;
+
+  res.status(200).json({ message: "Logout successful" });
+});
+
+// Start the server
+const PORT = process.env.PORT || 3333;
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}/`);
 });
