@@ -1,23 +1,19 @@
 import { useState } from "react";
-import { login, register } from "../api/requests";
+import { login, register, storeUserRefeshtoken } from "../api/requests";
 import { Link, useNavigate } from "react-router-dom";
 const Registration = () => {
   const [fullName, setFullName] = useState("");
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate()
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
     try {
-      const data = await register(fullName, user, password);
-      await login(user,password)
+      const refreshToken = await register(fullName, user, password);
       navigate('/')
+      storeUserRefeshtoken(user,refreshToken)
     } catch (error) {
       setError(error.message);
     }
@@ -34,8 +30,6 @@ const Registration = () => {
         <input type="text" id="user" name="user" value={user} onChange={(event) => setUser(event.target.value)} required />
         <label htmlFor="password">Password:</label>
         <input type="password" id="password" name="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-        <label htmlFor="confirmPassword">Confirm Password:</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required />
         <button type="submit">Submit</button>
         <Link to="/login">Login</Link>
       </form>

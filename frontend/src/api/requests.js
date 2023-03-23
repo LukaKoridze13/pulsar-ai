@@ -1,13 +1,12 @@
-import axios from 'axios';
-
+import axios from "axios";
+const link = "http://localhost:3333/";
 // Register a new user
 export const register = async (fullName, user, password) => {
   try {
-    const response = await axios.post('http://localhost:3333/register', {
+    const response = await axios.post(link + "register", {
       fullName,
       user,
       password,
-      refreshToken: null
     });
     return response.data;
   } catch (error) {
@@ -18,12 +17,11 @@ export const register = async (fullName, user, password) => {
 // Login an existing user
 export const login = async (user, password) => {
   try {
-    const response = await axios.post('http://localhost:3333/login', {
+    const response = await axios.put(link + "login", {
       user,
-      password
+      password,
     });
-    localStorage.setItem('jhsaf78-refreshToken', response.data.refreshToken);
-    return "Success";
+    return response.data;
   } catch (error) {
     throw error.response.data;
   }
@@ -32,8 +30,8 @@ export const login = async (user, password) => {
 // Logout a user
 export const logout = async (refreshToken) => {
   try {
-    const response = await axios.post('http://localhost:3333/logout', {
-      refreshToken
+    const response = await axios.put(link + "logout", {
+      refreshToken,
     });
     return response.data;
   } catch (error) {
@@ -41,20 +39,33 @@ export const logout = async (refreshToken) => {
   }
 };
 
-export const getOnlineUsers = async () => {
+export const getUser = async  (user)=>{
+  return await  axios.get(link+'/users/'+user)
+}
+
+export const getOnlineUsers = async (refreshToken) => {
   try {
-    const response = await axios.get('http://localhost:3333/online-users');
+    const response = await axios.get(link + "online-users", { refreshToken });
     return response.data;
   } catch (error) {
-    console.error(error);
+    return error;
   }
 };
 
-export const getRegisteredUsers = async () => {
+export const getRegisteredUsers = async (refreshToken) => {
   try {
-    const response = await axios.get('http://localhost:3333/registered-users');
+    const response = await axios.get(link + "registered-users");
     return response.data;
   } catch (error) {
-    console.error(error);
+    return error;
   }
 };
+export const storeUserRefeshtoken = (user, refreshToken) =>{
+  localStorage.setItem("snjci82q7fg72u", JSON.stringify({user, refreshToken}))
+}
+export const getUserRefeshtoken = (user, refreshToken) =>{
+  return JSON.parse(localStorage.getItem("snjci82q7fg72u"))
+}
+export const deleteUserRefeshtoken = ()=>{
+  localStorage.removeItem("snjci82q7fg72u")
+}

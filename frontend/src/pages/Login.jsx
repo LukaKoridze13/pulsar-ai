@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { login } from "../api/requests";
+import { login, storeUserRefeshtoken } from "../api/requests";
 import {Link, useNavigate} from 'react-router-dom'
 const Login = () => {
   const [user, setUser] = useState("");
@@ -10,6 +10,7 @@ const Login = () => {
     event.preventDefault();
     try {
       const data = await login(user, password);
+      storeUserRefeshtoken(user, data)
       navigate('/')
     } catch (error) {
       setError(error.message);
