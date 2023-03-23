@@ -25,7 +25,6 @@ let onlineUsers = 0;
 io.on("connection", (socket) => {
   onlineUsers++;
   io.emit("online", onlineUsers);
-  console.log('user joined')
   socket.on("register", () => {
     io.emit("registered-users", users.length);
   });
@@ -51,8 +50,8 @@ app.get("/online-users", (req, res) => {
   }
 });
 
-app.get("/registered-users", (req, res) => {
-  const { refreshToken } = req.body;
+app.get("/registered-users/:refreshToken", (req, res) => {
+  const refreshToken = req.params.refreshToken;
   const found = users.find((each) => each.refreshToken === refreshToken);
   if (!found) {
     res.status(401).send("Unauthorized");
@@ -65,14 +64,31 @@ app.get("/users", (req, res) => {
   res.json(users);
 });
 app.get("/users/:user", (req, res) => {
-  const find =  users.find(each => each.user === req.params.user);
-  if(find){
+  const find = users.find((each) => each.user === req.params.user);
+  if (find) {
     res.json(find);
-  }else{
+  } else {
     res.status(404).json("Not Found");
   }
 });
-
+app.get("/users/:user/online", (req, res) => {
+  const find = users.find((each) => each.user === req.params.user);
+  if (find) {
+    find.online = true;
+    res.send("Done");
+  } else {
+    res.status(404).send("Not Found");
+  }
+});
+app.get("/users/:user/offline", (req, res) => {
+  const find = users.find((each) => each.user === req.params.user);
+  if (find) {
+    find.online = false;
+    res.send("Done");
+  } else {
+    res.status(404).send("Not Found");
+  }
+});
 app.post("/register", (req, res) => {
   const { fullName, user, password } = req.body;
   if (!fullName || !user || !password) {
@@ -83,9 +99,9 @@ app.post("/register", (req, res) => {
     return res.status(409).json({ message: "Username already exists" });
   }
   const refreshToken = "TOKEN" + Math.random();
-  const newUser = { fullName, user, password, refreshToken, logins:1 };
+  const newUser = { fullName, user, password, refreshToken, logins: 1 };
   users.push(newUser);
-  io.emit("registered-users", "New User Registered");
+  io.emit("registered-users", users.length);
   res.status(201).json(refreshToken);
 });
 
@@ -97,6 +113,7 @@ app.put("/login", (req, res) => {
   }
   const newRefreshToken = "TOKEN" + Math.random();
   existingUser.refreshToken = newRefreshToken;
+  existingUser.logins++;
   res.status(200).json(newRefreshToken);
 });
 

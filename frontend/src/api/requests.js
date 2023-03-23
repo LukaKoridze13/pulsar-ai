@@ -40,21 +40,22 @@ export const logout = async (refreshToken) => {
 };
 
 export const getUser = async  (user)=>{
-  return await  axios.get(link+'/users/'+user)
+  return await  axios.get(link+'users/'+user)
 }
 
-export const getOnlineUsers = async (refreshToken) => {
-  try {
-    const response = await axios.get(link + "online-users", { refreshToken });
-    return response.data;
-  } catch (error) {
-    return error;
-  }
-};
+export const setOnline = async (user)=>{
+  return await  axios.get(link+'users/'+user+'/online/')
+
+}
+export const setOffline = async (user)=>{
+  return await  axios.get(link+'users/'+user+'/offline/')
+
+}
+
 
 export const getRegisteredUsers = async (refreshToken) => {
   try {
-    const response = await axios.get(link + "registered-users");
+    const response = await axios.get(link + "registered-users/"+refreshToken);
     return response.data;
   } catch (error) {
     return error;

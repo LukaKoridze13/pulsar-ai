@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { login, register, storeUserRefeshtoken } from "../api/requests";
+import { login, register, setOnline, storeUserRefeshtoken } from "../api/requests";
 import { Link, useNavigate } from "react-router-dom";
 const Registration = () => {
   const [fullName, setFullName] = useState("");

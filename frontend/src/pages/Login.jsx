@@ -12,6 +12,7 @@ const Login = () => {
       const data = await login(user, password);
       storeUserRefeshtoken(user, data)
       navigate('/')
+
     } catch (error) {
       setError(error.message);
     }
